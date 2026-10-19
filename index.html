@@ -1,0 +1,1061 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#082f49">
+    <title>Gestor de Clases Prácticas</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f7ff',
+                            100: '#e0effe',
+                            200: '#bae0fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0b85ea',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                            950: '#082f49',
+                        }
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style>
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        .document-card {
+            animation: fadeIn 0.25s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(5px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .filter-btn {
+            flex-shrink: 0;
+        }
+
+        #docModal {
+            transition: opacity 0.2s ease;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col antialiased">
+
+    <!-- ENCABEZADO -->
+    <header class="bg-gradient-to-r from-brand-900 via-brand-800 to-brand-900 text-white shadow-lg sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+
+                <div class="flex items-center space-x-3">
+                    <div class="p-2.5 bg-brand-700/60 rounded-xl border border-brand-500/30 backdrop-blur-md shadow-inner">
+                        <i data-lucide="folder-git-2" class="w-7 h-7 text-brand-200"></i>
+                    </div>
+
+                    <div>
+                        <h1 class="text-2xl font-bold tracking-tight text-white">
+                            Clases Prácticas
+                        </h1>
+                        <p class="text-xs text-brand-200/80 font-medium">
+                            Repositorio de Planificaciones, Guías y Evaluaciones
+                        </p>
+                    </div>
+                </div>
+
+                <!-- BUSCADOR -->
+                <div class="relative min-w-[280px] sm:min-w-[360px]">
+                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-brand-300">
+                        <i data-lucide="search" class="w-4 h-4"></i>
+                    </div>
+
+                    <input
+                        type="text"
+                        id="searchInput"
+                        placeholder="Buscar por título, fecha o palabras clave..."
+                        aria-label="Buscar documentos"
+                        class="w-full pl-10 pr-4 py-2.5 bg-brand-950/40 border border-brand-700/50 rounded-xl text-sm text-white placeholder-brand-300/70 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:bg-brand-950/70 transition-all duration-200"
+                    >
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        <!-- BARRA DE CONTROLES -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm">
+
+            <!-- FILTROS POR CATEGORÍA -->
+            <div
+                class="flex items-center space-x-1.5 overflow-x-auto pb-2 sm:pb-0 custom-scrollbar"
+                id="categoryFilters"
+            >
+                <button
+                    type="button"
+                    data-category="all"
+                    aria-pressed="true"
+                    class="filter-btn active px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-200 whitespace-nowrap bg-brand-600 text-white shadow-sm shadow-brand-500/20"
+                >
+                    Todos (<span id="count-all">0</span>)
+                </button>
+
+                <button
+                    type="button"
+                    data-category="Planificaciones"
+                    aria-pressed="false"
+                    class="filter-btn px-4 py-2 rounded-lg text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 transition-all duration-200 whitespace-nowrap"
+                >
+                    Planificaciones (<span id="count-planificaciones">0</span>)
+                </button>
+
+                <button
+                    type="button"
+                    data-category="Guías Secuenciales"
+                    aria-pressed="false"
+                    class="filter-btn px-4 py-2 rounded-lg text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-all duration-200 whitespace-nowrap"
+                >
+                    Guías (<span id="count-guias">0</span>)
+                </button>
+
+                <button
+                    type="button"
+                    data-category="Unidades Didácticas"
+                    aria-pressed="false"
+                    class="filter-btn px-4 py-2 rounded-lg text-xs font-semibold text-violet-700 bg-violet-50 hover:bg-violet-100 transition-all duration-200 whitespace-nowrap"
+                >
+                    Unidades (<span id="count-unidades">0</span>)
+                </button>
+
+                <button
+                    type="button"
+                    data-category="Autoevaluaciones"
+                    aria-pressed="false"
+                    class="filter-btn px-4 py-2 rounded-lg text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 transition-all duration-200 whitespace-nowrap"
+                >
+                    Autoevaluaciones (<span id="count-autoevaluaciones">0</span>)
+                </button>
+
+                <button
+                    type="button"
+                    data-category="Evaluación"
+                    aria-pressed="false"
+                    class="filter-btn px-4 py-2 rounded-lg text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 transition-all duration-200 whitespace-nowrap"
+                >
+                    Evaluaciones (<span id="count-evaluaciones">0</span>)
+                </button>
+            </div>
+
+            <!-- CAMBIO DE VISTA -->
+            <div class="flex items-center space-x-1 border-t sm:border-t-0 pt-3 sm:pt-0 border-slate-100 justify-end flex-shrink-0">
+
+                <button
+                    type="button"
+                    id="gridViewBtn"
+                    title="Vista Cuadrícula"
+                    aria-label="Mostrar vista de cuadrícula"
+                    aria-pressed="true"
+                    class="p-2 rounded-lg bg-brand-50 text-brand-700 hover:bg-brand-100 transition-colors"
+                >
+                    <i data-lucide="layout-grid" class="w-4 h-4"></i>
+                </button>
+
+                <button
+                    type="button"
+                    id="listViewBtn"
+                    title="Vista Lista"
+                    aria-label="Mostrar vista de lista"
+                    aria-pressed="false"
+                    class="p-2 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-colors"
+                >
+                    <i data-lucide="list" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- CONTENEDOR DE DOCUMENTOS -->
+        <div
+            id="cardsContainer"
+            class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+        ></div>
+
+        <!-- ESTADO VACÍO -->
+        <div
+            id="emptyState"
+            class="hidden text-center py-16 bg-white rounded-2xl border border-dashed border-slate-300"
+        >
+            <div class="w-12 h-12 rounded-full bg-brand-50 text-brand-600 flex items-center justify-center mx-auto mb-3">
+                <i data-lucide="search-x" class="w-6 h-6"></i>
+            </div>
+
+            <h3 class="text-base font-semibold text-slate-800">
+                No se encontraron documentos
+            </h3>
+
+            <p class="text-xs text-slate-500 mt-1">
+                Intenta con otros términos de búsqueda o cambia de categoría.
+            </p>
+        </div>
+    </main>
+
+    <!-- MODAL DE PREVISUALIZACIÓN -->
+    <div
+        id="docModal"
+        class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modalTitle"
+    >
+        <div class="bg-white rounded-2xl max-w-4xl w-full h-[85vh] flex flex-col shadow-2xl overflow-hidden border border-slate-200">
+
+            <!-- ENCABEZADO DEL MODAL -->
+            <div class="px-4 sm:px-6 py-4 bg-brand-900 text-white flex items-center justify-between gap-3">
+                <div class="flex items-center space-x-3 overflow-hidden min-w-0">
+                    <i data-lucide="file-text" class="w-5 h-5 text-brand-300 flex-shrink-0"></i>
+
+                    <h3 id="modalTitle" class="font-semibold text-base truncate">
+                        Título del documento
+                    </h3>
+                </div>
+
+                <div class="flex items-center space-x-2 flex-shrink-0">
+                    <a
+                        id="modalExternalLink"
+                        href="#"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="px-3 py-1.5 bg-brand-700 hover:bg-brand-600 text-white text-xs font-medium rounded-lg transition-colors flex items-center space-x-1"
+                    >
+                        <span>Abrir en Drive</span>
+                        <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+                    </a>
+
+                    <button
+                        type="button"
+                        id="closeModalBtn"
+                        aria-label="Cerrar vista previa"
+                        class="p-1.5 hover:bg-brand-800 rounded-lg text-brand-200 hover:text-white transition-colors"
+                    >
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- CONTENIDO DEL MODAL -->
+            <div class="flex-grow bg-slate-100 relative">
+                <iframe
+                    id="modalIframe"
+                    class="w-full h-full border-0"
+                    src=""
+                    title="Vista previa del documento"
+                    referrerpolicy="no-referrer"
+                    allowfullscreen
+                ></iframe>
+            </div>
+        </div>
+    </div>
+
+    <!-- PIE DE PÁGINA -->
+    <footer class="bg-white border-t border-slate-200 mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 text-center text-xs text-slate-500">
+            <p>© 2026 Panel de Recursos Pedagógicos — Organizado por categorías.</p>
+        </div>
+    </footer>
+
+    <!-- LÓGICA E INTERACCIÓN -->
+    <script>
+        // =====================================================
+        // DATOS DE LOS DOCUMENTOS
+        // =====================================================
+
+        const documentsData = [
+            // PLANIFICACIONES
+            {
+                id: 1,
+                title: "Planificación - Clase Práctica Final Tribunal - 20 de octubre de 2026",
+                category: "Planificaciones",
+                badge: "Tribunal Final",
+                date: "20 Oct 2026",
+                url: "https://drive.google.com/open?id=19yN0xu-qd9zSAZ2Qx2T-ObPeyHgEmPFLGAI2XfGk17U",
+                description: "Estructura didáctica y desarrollo de la evaluación práctica ante tribunal."
+            },
+            {
+                id: 2,
+                title: "Planificación - Clase Práctica Observada - 4 de agosto de 2026",
+                category: "Planificaciones",
+                badge: "Observada",
+                date: "04 Ago 2026",
+                url: "https://drive.google.com/open?id=1ZxaiMNMVRieMRjvD0LX2nxLmlmt2uP5VHxxH1sm0SO0",
+                description: "Plan detallado para la sesión práctica de supervisión docente."
+            },
+            {
+                id: 3,
+                title: "Planificación - Clase Práctica - 31 de agosto de 2026",
+                category: "Planificaciones",
+                badge: "Regular",
+                date: "31 Ago 2026",
+                url: "https://drive.google.com/open?id=157wbnQe7pvRSjnJ4r82oCwxXmbB8GFbeCXcnDhtTLSo",
+                description: "Plan de clase orientada a dinámicas de laboratorio e interacción."
+            },
+            {
+                id: 4,
+                title: "Planificación - Clase Práctica Observada - 23 de junio de 2026",
+                category: "Planificaciones",
+                badge: "Observada",
+                date: "23 Jun 2026",
+                url: "https://drive.google.com/open?id=1-iopWhnSigP8X1rsmQF4aZ7ld01aCFVky2b-ip5A2QQ",
+                description: "Guía metodológica para la primera observación práctica presencial."
+            },
+            {
+                id: 5,
+                title: "Planificación - Clase práctica - 9 de junio de 2026",
+                category: "Planificaciones",
+                badge: "Regular",
+                date: "09 Jun 2026",
+                url: "https://drive.google.com/open?id=12IpI7JhthxrRj9AcK43xVKx8a30suE5MZEZ9z69oDLQ",
+                description: "Diseño pedagógico y secuencia de actividades prácticas iniciales."
+            },
+            {
+                id: 6,
+                title: "Planificación de Unidad - Estrategias de Validación y Manejo de Errores",
+                category: "Planificaciones",
+                badge: "Unidad Temática",
+                date: "2026",
+                url: "https://drive.google.com/open?id=1YI6wqpu_RGNBvfz59KJQONP_9eoqBwPFjh-XbawnzRA",
+                description: "Contenidos, objetivos y evaluación para el bloque de validaciones."
+            },
+            {
+                id: 7,
+                title: "(Borrador) Planificación de Unidad - Seguridad en Aplicaciones Web",
+                category: "Planificaciones",
+                badge: "Borrador",
+                date: "2026",
+                url: "https://drive.google.com/open?id=17wcBNq7UFEdF-Rj39n-5bYHYEXnK-cCsb1uLneaFcqM",
+                description: "Esquema preliminar de contenidos de ciberseguridad web."
+            },
+
+            // GUÍAS SECUENCIALES
+            {
+                id: 8,
+                title: "Guía Secuencial - Clase Final Tribunal",
+                category: "Guías Secuenciales",
+                badge: "Tribunal",
+                date: "Oct 2026",
+                url: "https://drive.google.com/open?id=1TbG7NAE8qJHC5KUtjCkaonQuqrFj3IG6hNuDMuE9-8I",
+                description: "Paso a paso cronológico para el desarrollo de la defensa práctica."
+            },
+            {
+                id: 9,
+                title: "Guía Secuencial - Clase del 14 de septiembre de 2026",
+                category: "Guías Secuenciales",
+                badge: "Guía de Clase",
+                date: "14 Sep 2026",
+                url: "https://drive.google.com/open?id=1GY6WePKAfAvFmcOB1g5sfyp7T3iUEAQdP127Tph94ug",
+                description: "Secuencia didáctica detallada por bloques de tiempo."
+            },
+            {
+                id: 10,
+                title: "Esquema de Clase (Guía secuencial) - 4 de agosto de 2026",
+                category: "Guías Secuenciales",
+                badge: "Esquema",
+                date: "04 Ago 2026",
+                url: "https://drive.google.com/open?id=1k0BUR-qYjHmz3HXeZT2-2866ZIFuTVkseyJZjuhsx1U",
+                description: "Estructura secuencial para ejecución de clase observada."
+            },
+            {
+                id: 11,
+                title: "Guía secuencial - Desarrollo de clase",
+                category: "Guías Secuenciales",
+                badge: "General",
+                date: "07 Sep 2026",
+                url: "https://drive.google.com/open?id=1Z6wOiB7erts2YTAYXjzqZk5V5d2wDN7k0Qsss16aN3c",
+                description: "Orientación procedimental general para el aula."
+            },
+
+            // UNIDADES DIDÁCTICAS
+            {
+                id: 12,
+                title: "Unidad Didáctica - Clase 1 - 7 de septiembre de 2026",
+                category: "Unidades Didácticas",
+                badge: "Bloque 1",
+                date: "07 Sep 2026",
+                url: "https://drive.google.com/open?id=1y7i9Ph05tlHe4ol4ouJMIYlrjXYqahIVNVvWaWDRkb4",
+                description: "Introducción y fundamentos del programa didáctico."
+            },
+            {
+                id: 13,
+                title: "Unidad Didáctica - Clase 2 - 14 de septiembre de 2026",
+                category: "Unidades Didácticas",
+                badge: "Bloque 2",
+                date: "14 Sep 2026",
+                url: "https://drive.google.com/open?id=1TNONcQidS_CNieAinMV96vnPLfa_m0-aplOGOBgGCZ8",
+                description: "Profundización de conceptos y práctica guiada."
+            },
+            {
+                id: 14,
+                title: "Unidad Didáctica - Clase 3 - 5 de octubre de 2026",
+                category: "Unidades Didácticas",
+                badge: "Bloque 3",
+                date: "05 Oct 2026",
+                url: "https://drive.google.com/open?id=1j7DuD_u4i78sJQeC4V2MTgAN7ISYrYWqfsoBYiGmZKA",
+                description: "Consolidación de proyectos y aplicación avanzada."
+            },
+
+            // AUTOEVALUACIONES
+            {
+                id: 15,
+                title: "Autoevaluación - Clase 2 - 14 de sept. 2026",
+                category: "Autoevaluaciones",
+                badge: "Autoevaluación",
+                date: "14 Sep 2026",
+                url: "https://drive.google.com/open?id=1loT-WO5f6fumrDmWCJUS_MLNtOpsdY_tBPxTFNG0yMg",
+                description: "Formulario de reflexión sobre el desempeño de la Clase 2."
+            },
+            {
+                id: 16,
+                title: "Autoevaluación - 4 de agosto de 2026",
+                category: "Autoevaluaciones",
+                badge: "Autoevaluación",
+                date: "04 Ago 2026",
+                url: "https://drive.google.com/open?id=1LeqyQjDeQIQSfsBP_9Gc-ryevBE2XkWxaP_KBMlrXTA",
+                description: "Análisis reflexivo sobre la clase práctica observada."
+            },
+            {
+                id: 17,
+                title: "Autoevaluación - Clase del 23 de junio de 2026",
+                category: "Autoevaluaciones",
+                badge: "Autoevaluación",
+                date: "23 Jun 2026",
+                url: "https://drive.google.com/open?id=1KklYRIN817XoXflntT9ddIy0OU_aetbziFLNCAyHAM0",
+                description: "Registro de autoevaluación del docente en formación."
+            },
+
+            // EVALUACIONES
+            {
+                id: 18,
+                title: "Puntos Clave - Tribunal Final",
+                category: "Evaluación",
+                badge: "Resumen",
+                date: "Oct 2026",
+                url: "https://drive.google.com/open?id=1yGw2dSt6RoAr3yNEuIEQ5GPE5LX5T55wz810uMFwwgQ",
+                description: "Lista de verificación e hitos para la evaluación final."
+            },
+            {
+                id: 19,
+                title: "Lista de Cotejo - Evaluación Procesual",
+                category: "Evaluación",
+                badge: "Rúbrica",
+                date: "2026",
+                url: "https://drive.google.com/open?id=1USd8jtfWEkrqucBzIs96DY45ihjyGh6ZZQPN2FE3NWM",
+                description: "Instrumento de seguimiento continuo de aprendizajes."
+            }
+        ];
+
+        // =====================================================
+        // ESTADO GLOBAL
+        // =====================================================
+
+        let currentCategory = 'all';
+        let searchQuery = '';
+        let isGridView = true;
+        let previouslyFocusedElement = null;
+
+        // =====================================================
+        // REFERENCIAS A ELEMENTOS HTML
+        // =====================================================
+
+        const cardsContainer = document.getElementById('cardsContainer');
+        const emptyState = document.getElementById('emptyState');
+        const searchInput = document.getElementById('searchInput');
+        const categoryFilters = document.getElementById('categoryFilters');
+        const gridViewBtn = document.getElementById('gridViewBtn');
+        const listViewBtn = document.getElementById('listViewBtn');
+
+        const docModal = document.getElementById('docModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalIframe = document.getElementById('modalIframe');
+        const modalExternalLink = document.getElementById('modalExternalLink');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+
+        // =====================================================
+        // COLORES POR CATEGORÍA
+        // =====================================================
+
+        function getCategoryStyle(category) {
+            switch (category) {
+                case 'Planificaciones':
+                    return {
+                        bg: 'bg-blue-50',
+                        text: 'text-blue-700',
+                        border: 'border-blue-200',
+                        badge: 'bg-blue-100 text-blue-800 border-blue-200',
+                        icon: 'file-spreadsheet'
+                    };
+
+                case 'Guías Secuenciales':
+                    return {
+                        bg: 'bg-emerald-50',
+                        text: 'text-emerald-700',
+                        border: 'border-emerald-200',
+                        badge: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+                        icon: 'list-checks'
+                    };
+
+                case 'Unidades Didácticas':
+                    return {
+                        bg: 'bg-violet-50',
+                        text: 'text-violet-700',
+                        border: 'border-violet-200',
+                        badge: 'bg-violet-100 text-violet-800 border-violet-200',
+                        icon: 'book-open'
+                    };
+
+                case 'Autoevaluaciones':
+                    return {
+                        bg: 'bg-amber-50',
+                        text: 'text-amber-700',
+                        border: 'border-amber-200',
+                        badge: 'bg-amber-100 text-amber-800 border-amber-200',
+                        icon: 'user-check'
+                    };
+
+                case 'Evaluación':
+                    return {
+                        bg: 'bg-rose-50',
+                        text: 'text-rose-700',
+                        border: 'border-rose-200',
+                        badge: 'bg-rose-100 text-rose-800 border-rose-200',
+                        icon: 'clipboard-check'
+                    };
+
+                default:
+                    return {
+                        bg: 'bg-slate-50',
+                        text: 'text-slate-700',
+                        border: 'border-slate-200',
+                        badge: 'bg-slate-100 text-slate-700 border-slate-200',
+                        icon: 'file-text'
+                    };
+            }
+        }
+
+        // =====================================================
+        // INICIALIZACIÓN
+        // =====================================================
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updateCounts();
+            renderCards();
+            lucide.createIcons();
+
+            // Buscador
+            searchInput.addEventListener('input', (event) => {
+                searchQuery = event.target.value
+                    .toLocaleLowerCase('es')
+                    .trim();
+
+                renderCards();
+            });
+
+            // Filtros por categoría
+            categoryFilters.addEventListener('click', (event) => {
+                const button = event.target.closest('.filter-btn');
+
+                if (!button) return;
+
+                currentCategory = button.dataset.category;
+
+                updateActiveFilter(button);
+                renderCards();
+            });
+
+            // Vista de cuadrícula
+            gridViewBtn.addEventListener('click', () => {
+                if (isGridView) return;
+
+                isGridView = true;
+
+                gridViewBtn.className =
+                    'p-2 rounded-lg bg-brand-50 text-brand-700 hover:bg-brand-100 transition-colors';
+
+                listViewBtn.className =
+                    'p-2 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-colors';
+
+                gridViewBtn.setAttribute('aria-pressed', 'true');
+                listViewBtn.setAttribute('aria-pressed', 'false');
+
+                cardsContainer.className =
+                    'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6';
+
+                renderCards();
+            });
+
+            // Vista de lista
+            listViewBtn.addEventListener('click', () => {
+                if (!isGridView) return;
+
+                isGridView = false;
+
+                listViewBtn.className =
+                    'p-2 rounded-lg bg-brand-50 text-brand-700 hover:bg-brand-100 transition-colors';
+
+                gridViewBtn.className =
+                    'p-2 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-colors';
+
+                listViewBtn.setAttribute('aria-pressed', 'true');
+                gridViewBtn.setAttribute('aria-pressed', 'false');
+
+                cardsContainer.className = 'flex flex-col gap-3';
+
+                renderCards();
+            });
+
+            // Cerrar modal
+            closeModalBtn.addEventListener('click', closeModal);
+
+            // Cerrar al hacer clic fuera del contenido
+            docModal.addEventListener('click', (event) => {
+                if (event.target === docModal) {
+                    closeModal();
+                }
+            });
+
+            // Cerrar con Escape
+            document.addEventListener('keydown', (event) => {
+                if (
+                    event.key === 'Escape' &&
+                    !docModal.classList.contains('hidden')
+                ) {
+                    closeModal();
+                }
+            });
+        });
+
+        // =====================================================
+        // ACTUALIZAR FILTRO ACTIVO
+        // =====================================================
+
+        function updateActiveFilter(activeButton) {
+            document.querySelectorAll('.filter-btn').forEach((button) => {
+                button.classList.remove(
+                    'bg-brand-600',
+                    'text-white',
+                    'shadow-sm',
+                    'shadow-brand-500/20',
+                    'active'
+                );
+
+                button.classList.add(
+                    'text-slate-600',
+                    'hover:bg-slate-100',
+                    'hover:text-slate-900'
+                );
+
+                button.setAttribute('aria-pressed', 'false');
+            });
+
+            activeButton.classList.remove(
+                'text-slate-600',
+                'hover:bg-slate-100',
+                'hover:text-slate-900'
+            );
+
+            activeButton.classList.add(
+                'bg-brand-600',
+                'text-white',
+                'shadow-sm',
+                'shadow-brand-500/20',
+                'active'
+            );
+
+            activeButton.setAttribute('aria-pressed', 'true');
+        }
+
+        // =====================================================
+        // CONTADORES DE DOCUMENTOS
+        // =====================================================
+
+        function updateCounts() {
+            const countByCategory = (category) =>
+                documentsData.filter(
+                    document => document.category === category
+                ).length;
+
+            document.getElementById('count-all').textContent =
+                documentsData.length;
+
+            document.getElementById('count-planificaciones').textContent =
+                countByCategory('Planificaciones');
+
+            document.getElementById('count-guias').textContent =
+                countByCategory('Guías Secuenciales');
+
+            document.getElementById('count-unidades').textContent =
+                countByCategory('Unidades Didácticas');
+
+            document.getElementById('count-autoevaluaciones').textContent =
+                countByCategory('Autoevaluaciones');
+
+            document.getElementById('count-evaluaciones').textContent =
+                countByCategory('Evaluación');
+        }
+
+        // =====================================================
+        // FILTRAR DOCUMENTOS
+        // =====================================================
+
+        function getFilteredDocuments() {
+            return documentsData.filter((document) => {
+                const matchesCategory =
+                    currentCategory === 'all' ||
+                    document.category === currentCategory;
+
+                const searchableText = [
+                    document.title,
+                    document.description,
+                    document.badge,
+                    document.category,
+                    document.date
+                ].join(' ').toLocaleLowerCase('es');
+
+                const matchesSearch =
+                    searchableText.includes(searchQuery);
+
+                return matchesCategory && matchesSearch;
+            });
+        }
+
+        // =====================================================
+        // RENDERIZAR DOCUMENTOS
+        // =====================================================
+
+        function renderCards() {
+            const filteredDocs = getFilteredDocuments();
+
+            cardsContainer.innerHTML = '';
+
+            if (filteredDocs.length === 0) {
+                emptyState.classList.remove('hidden');
+                lucide.createIcons();
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+
+            filteredDocs.forEach((doc) => {
+                const style = getCategoryStyle(doc.category);
+
+                const card = isGridView
+                    ? createGridCard(doc, style)
+                    : createListCard(doc, style);
+
+                cardsContainer.appendChild(card);
+            });
+
+            lucide.createIcons();
+        }
+
+        // =====================================================
+        // CREAR TARJETA: VISTA CUADRÍCULA
+        // =====================================================
+
+        function createGridCard(doc, style) {
+            const card = document.createElement('article');
+
+            card.className =
+                'document-card bg-white rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between overflow-hidden group hover:-translate-y-0.5';
+
+            card.innerHTML = `
+                <div class="p-5">
+                    <div class="flex items-center justify-between gap-2 mb-3 flex-wrap">
+
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold ${style.bg} ${style.text} ${style.border} border">
+                            <i data-lucide="${style.icon}" class="w-3.5 h-3.5 mr-1.5"></i>
+                            ${escapeHTML(doc.category)}
+                        </span>
+
+                        <span class="text-[11px] font-medium text-slate-400 flex items-center">
+                            <i data-lucide="calendar" class="w-3 h-3 mr-1"></i>
+                            ${escapeHTML(doc.date)}
+                        </span>
+                    </div>
+
+                    <h3 class="text-base font-bold text-slate-900 group-hover:text-brand-600 transition-colors leading-snug mb-2">
+                        ${escapeHTML(doc.title)}
+                    </h3>
+
+                    <p class="text-xs text-slate-500 leading-relaxed">
+                        ${escapeHTML(doc.description)}
+                    </p>
+                </div>
+
+                <div class="px-5 py-3.5 bg-slate-50/80 border-t border-slate-100 flex items-center justify-between gap-2 flex-wrap">
+
+                    <span class="inline-flex items-center text-[11px] font-semibold px-2 py-1 rounded-md border ${style.badge}">
+                        ${escapeHTML(doc.badge)}
+                    </span>
+
+                    <div class="flex items-center space-x-2">
+
+                        <button
+                            type="button"
+                            data-action="preview"
+                            data-id="${doc.id}"
+                            class="px-3 py-1.5 bg-white hover:bg-brand-50 border border-slate-200 hover:border-brand-200 text-brand-700 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1"
+                        >
+                            <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+                            <span>Vista previa</span>
+                        </button>
+
+                        <a
+                            href="${escapeHTML(doc.url)}"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="p-1.5 bg-brand-600 hover:bg-brand-700 text-white rounded-lg transition-colors"
+                            title="Abrir en Drive"
+                            aria-label="Abrir ${escapeHTML(doc.title)} en Drive"
+                        >
+                            <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+                        </a>
+                    </div>
+                </div>
+            `;
+
+            return card;
+        }
+
+        // =====================================================
+        // CREAR TARJETA: VISTA LISTA
+        // =====================================================
+
+        function createListCard(doc, style) {
+            const card = document.createElement('article');
+
+            card.className =
+                'document-card bg-white rounded-xl border border-slate-200/80 p-4 shadow-sm hover:shadow-md transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4';
+
+            card.innerHTML = `
+                <div class="flex items-start space-x-3.5 min-w-0">
+
+                    <div class="p-2.5 rounded-lg ${style.bg} ${style.text} flex-shrink-0 mt-0.5">
+                        <i data-lucide="${style.icon}" class="w-5 h-5"></i>
+                    </div>
+
+                    <div class="min-w-0">
+                        <div class="flex items-center flex-wrap gap-2 mb-1">
+
+                            <span class="text-xs font-semibold ${style.text}">
+                                ${escapeHTML(doc.category)}
+                            </span>
+
+                            <span class="text-slate-300">•</span>
+
+                            <span class="text-xs text-slate-400">
+                                ${escapeHTML(doc.date)}
+                            </span>
+                        </div>
+
+                        <h3 class="text-sm font-bold text-slate-900 leading-snug">
+                            ${escapeHTML(doc.title)}
+                        </h3>
+
+                        <p class="text-xs text-slate-500 mt-1">
+                            ${escapeHTML(doc.description)}
+                        </p>
+
+                        <div class="mt-2">
+                            <span class="inline-flex items-center text-[11px] font-semibold px-2 py-1 rounded-md border ${style.badge}">
+                                ${escapeHTML(doc.badge)}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end space-x-2 flex-shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
+
+                    <button
+                        type="button"
+                        data-action="preview"
+                        data-id="${doc.id}"
+                        class="px-3 py-1.5 bg-slate-100 hover:bg-brand-50 hover:text-brand-700 text-slate-700 rounded-lg text-xs font-semibold transition-colors flex items-center space-x-1"
+                    >
+                        <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+                        <span>Vista previa</span>
+                    </button>
+
+                    <a
+                        href="${escapeHTML(doc.url)}"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="px-3 py-1.5 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-xs font-semibold transition-colors flex items-center space-x-1"
+                    >
+                        <span>Abrir</span>
+                        <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+                    </a>
+                </div>
+            `;
+
+            return card;
+        }
+
+        // =====================================================
+        // ESCAPAR TEXTO DINÁMICO
+        // =====================================================
+
+        function escapeHTML(value) {
+            return String(value).replace(/[&<>"']/g, (character) => {
+                const entities = {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#39;'
+                };
+
+                return entities[character];
+            });
+        }
+
+        // =====================================================
+        // ABRIR VISTA PREVIA
+        // =====================================================
+
+        function openModal(title, url) {
+            previouslyFocusedElement = document.activeElement;
+
+            modalTitle.textContent = title;
+            modalExternalLink.href = url;
+
+            let embedUrl = url;
+
+            // Obtener el ID de archivos de Google Drive.
+            const driveMatch = url.match(
+                /drive\.google\.com\/(?:file\/d\/|open\?id=)([^/?&]+)/
+            );
+
+            const docsMatch = url.match(
+                /docs\.google\.com\/document\/d\/([^/?&]+)/
+            );
+
+            const formsMatch = url.match(
+                /docs\.google\.com\/forms\/d\/([^/?&]+)/
+            );
+
+            if (driveMatch) {
+                embedUrl =
+                    `https://drive.google.com/file/d/${driveMatch[1]}/preview`;
+            } else if (docsMatch) {
+                embedUrl =
+                    `https://docs.google.com/document/d/${docsMatch[1]}/preview`;
+            } else if (formsMatch) {
+                embedUrl =
+                    `https://docs.google.com/forms/d/${formsMatch[1]}/viewform?embedded=true`;
+            }
+
+            modalIframe.src = embedUrl;
+
+            docModal.classList.remove('hidden');
+            docModal.classList.add('flex');
+
+            document.body.classList.add('overflow-hidden');
+
+            closeModalBtn.focus();
+        }
+
+        // =====================================================
+        // CERRAR VISTA PREVIA
+        // =====================================================
+
+        function closeModal() {
+            docModal.classList.add('hidden');
+            docModal.classList.remove('flex');
+
+            modalIframe.src = '';
+
+            document.body.classList.remove('overflow-hidden');
+
+            if (
+                previouslyFocusedElement &&
+                typeof previouslyFocusedElement.focus === 'function'
+            ) {
+                previouslyFocusedElement.focus();
+            }
+        }
+
+        // =====================================================
+        // EVENTOS DE LOS BOTONES DE VISTA PREVIA
+        // =====================================================
+
+        cardsContainer.addEventListener('click', (event) => {
+            const previewButton = event.target.closest(
+                '[data-action="preview"]'
+            );
+
+            if (!previewButton) return;
+
+            const documentId = Number(previewButton.dataset.id);
+
+            const selectedDocument = documentsData.find(
+                document => document.id === documentId
+            );
+
+            if (!selectedDocument) return;
+
+            openModal(
+                selectedDocument.title,
+                selectedDocument.url
+            );
+        });
+    </script>
+</body>
+</html>
